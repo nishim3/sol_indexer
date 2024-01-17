@@ -8,6 +8,7 @@ collection = db['blockchain_data']
 logs = "logs.txt"
 
 
+
 @app.route('/lastBlock', methods=['GET'])
 def last_block():
     try:
@@ -34,6 +35,18 @@ def ispeed():
             "last_processed_block": int(data[0]),
             "time" : data[2]
         })
+
+@app.route('/avgblockspeed', method=['GET'])
+def avgbs():
+    try:
+        with open(logs, "r") as file:
+            data = file.read().split('\n')
+            return jsonify({
+                "Average speed ": f"{data[3]} blocks/s"
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
 
 
 if __name__ == '__main__':

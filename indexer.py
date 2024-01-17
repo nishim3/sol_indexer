@@ -30,9 +30,11 @@ else:
         restart_count = int(data[1])
 
 last_processed_block = 0
-islot_num=slot_number
+islot=slot_number
+_itime=time.time()
 itime=None
 processing_time=None
+avg_speed=None
 try:
     while True:
         print(f"Indexing block: {slot_number}")
@@ -62,9 +64,10 @@ try:
 
         last_processed_block = slot_number
         processing_time=time.time()-itime
+        avg_speed=(last_processed_block-islot)/(time.time()-_itime)
         slot_number += 1
         with open(logs, "w") as file:
-            file.write(f"{last_processed_block}\n{restart_count}\n{processing_time}")
+            file.write(f"{last_processed_block}\n{restart_count}\n{processing_time}\n{avg_speed}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
@@ -78,7 +81,7 @@ finally:
     # Update api file with slot number and restart count
     
     with open(logs, "w") as file:
-        file.writelines(f"{last_processed_block}\n{restart_count}\n{processing_time}")
+        file.write(f"{last_processed_block}\n{restart_count}\n{processing_time}\n{avg_speed}")
 
     client.close()
 
