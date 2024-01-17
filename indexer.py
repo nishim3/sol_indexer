@@ -1,6 +1,7 @@
 import os
 import requests
 from pymongo import MongoClient
+import time
 
 url = 'https://solana-mainnet.g.alchemy.com/v2/CGiyOMQ5iorRtcPm2xnU7qOSkocN2Ps7'
 headers = {'Content-Type': 'application/json'}
@@ -9,13 +10,12 @@ headers = {'Content-Type': 'application/json'}
 client = MongoClient('localhost', 27017)
 db = client['solana_data']
 collection = db['blockchain_data']
-api_file = "api_data.txt"
+logs = "logs.txt"
 
 slot_number = 0
 restart_count = 0
-
-if not os.path.exists(api_file):
-    with open(api_file, "w") as file:
+if not os.path.exists(logs):
+    with open(logs, "w") as file:
         slot_data = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -23,20 +23,21 @@ if not os.path.exists(api_file):
         }
         slot_response = requests.post(url, json=slot_data, headers=headers)
         slot_number = slot_response.json()['result']
-
 else:
-    with open(api_file, "r") as file:
+    with open(logs, "r") as file:
         data = file.read().split('\n')
         slot_number = int(data[0])
         restart_count = int(data[1])
 
 last_processed_block = 0
-
+islot_num=slot_number
+itime=None
+processing_time=None
 try:
     while True:
         print(f"Indexing block: {slot_number}")
-
         # Fetch the block for the current slot
+        itime=time.time()
         block_data = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -60,9 +61,10 @@ try:
             collection.insert_one(transaction)
 
         last_processed_block = slot_number
+        processing_time=time.time()-itime
         slot_number += 1
-        with open(api_file, "w") as file:
-            file.write(f"{last_processed_block}\n{restart_count}")
+        with open(logs, "w") as file:
+            file.write(f"{last_processed_block}\n{restart_count}\n{processing_time}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
@@ -74,8 +76,9 @@ finally:
     restart_count += 1
 
     # Update api file with slot number and restart count
-    with open(api_file, "w") as file:
-        file.write(f"{last_processed_block}\n{restart_count}")
+    
+    with open(logs, "w") as file:
+        file.writelines(f"{last_processed_block}\n{restart_count}\n{processing_time}")
 
     client.close()
 
