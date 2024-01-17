@@ -9,28 +9,28 @@ headers = {'Content-Type': 'application/json'}
 client = MongoClient('localhost', 27017)
 db = client['solana_data']
 collection = db['blockchain_data']
-
 api_file = "api_data.txt"
 
-# Initialize slot number and restart count
 slot_number = 0
 restart_count = 0
 
-# Check if the api file exists
-if os.path.exists(api_file):
-    with open(api_file, "r") as file:
-        data = file.read().split(',')
-        if len(data) == 2:
-            slot_number, restart_count = map(int, data)
+if not os.path.exists(api_file):
+    with open(api_file, "w") as file:
+        slot_data = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getSlot"
+        }
+        slot_response = requests.post(url, json=slot_data, headers=headers)
+        slot_number = slot_response.json()['result']
+
 else:
-    slot_data = {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "getSlot"}
+    with open(api_file, "r") as file:
+        data = file.read().split('\n')
+        slot_number = int(data[0])
+        restart_count = int(data[1])
 
-    slot_response = requests.post(url, json=slot_data, headers=headers)
-    slot_number = slot_response.json()['result']
-
+last_processed_block = 0
 
 try:
     while True:
@@ -59,10 +59,15 @@ try:
             transaction['block'] = slot_number
             collection.insert_one(transaction)
 
+        last_processed_block = slot_number
         slot_number += 1
+        with open(api_file, "w") as file:
+            file.write(f"{last_processed_block}\n{restart_count}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
+
+
 
 finally:
     # Increment restart count
@@ -70,6 +75,8 @@ finally:
 
     # Update api file with slot number and restart count
     with open(api_file, "w") as file:
-        file.write(f"{slot_number},{restart_count}")
+        file.write(f"{last_processed_block}\n{restart_count}")
 
     client.close()
+
+
