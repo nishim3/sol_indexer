@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
-
+from bson.json_util import dumps
+import json
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
 db = client['solana_data']
@@ -36,7 +37,7 @@ def ispeed():
             "time" : data[2]
         })
 
-@app.route('/avgblockspeed', method=['GET'])
+@app.route('/avgblockspeed', methods=['GET'])
 def avgbs():
     try:
         with open(logs, "r") as file:
@@ -47,6 +48,20 @@ def avgbs():
     except Exception as e:
         return jsonify({"error": str(e)})
     
+@app.route('/transactioncount/<blocknum>', methods=['GET'])
+def no_of_transactions(blocknum):
+    result=collection.count_documents({'block': int(blocknum)})
+    return jsonify({
+        "block": f"{blocknum}",
+        "transactions": f"{result}"
+    })
+
+@app.route('/transactions/<blocknum>', methods=["GET"])
+def block(blocknum):
+    result=collection.find({'block': int(blocknum)})
+    block_list = [transact.get('transaction') for transact in result]
+    return jsonify(block_list)
+
 
 
 if __name__ == '__main__':
