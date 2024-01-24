@@ -108,11 +108,11 @@ This python application provides two APIs for retrieving performance-related dat
 
 1. Start the application by running the following commands:
    ```bash
-   python api.py 
+   python src/api.py 
    ```
    In a separate terminal, start
     ```bash
-   python indexer.py 
+   python src/indexer.py 
    ```
    
 3. Once the application is running, you can make API requests using `curl` or any other HTTP client of your choice.
