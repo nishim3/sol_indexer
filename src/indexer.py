@@ -5,7 +5,7 @@ from websocket import create_connection
 import ssl
 import time
 
-url = 'wss://solana-mainnet.g.alchemy.com/v2/CGiyOMQ5iorRtcPm2xnU7qOSkocN2Ps7'
+url = 'wss://solana-mainnet.g.alchemy.com/v2/...'
 headers = {'Content-Type': 'application/json'}
 
 # Connect to MongoDB
